@@ -8,9 +8,9 @@
     :root {
       --bg-1: #0e2042;
       --bg-2: #070f22;
-      --panel: rgba(13, 20, 38, 0.92);
-      --window: #121f3e;
-      --window-top: #1b315f;
+      --panel: rgba(20, 24, 38, 0.45);
+      --window: rgba(21, 31, 58, 0.5);
+      --window-top: rgba(42, 62, 106, 0.45);
       --text: #eff4ff;
       --muted: #b5c6ee;
       --accent: #62b8ff;
@@ -31,7 +31,7 @@
       overflow: hidden;
       font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--text);
-      background: radial-gradient(circle at 20% 18%, #2f6bd4, var(--bg-1) 38%, var(--bg-2));
+      background: var(--wallpaper, radial-gradient(circle at 20% 18%, #2f6bd4, var(--bg-1) 38%, var(--bg-2)));
       touch-action: manipulation;
     }
 
@@ -53,7 +53,9 @@
 
     .icon {
       border: 0;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border-radius: 12px;
       color: var(--text);
       padding: 8px 6px;
@@ -88,6 +90,8 @@
     .i-camera { background-image: linear-gradient(135deg, #ffccd6, #ff7ca0); }
     .i-games { background-image: linear-gradient(135deg, #a98bff, #6b47db); }
     .i-weather { background-image: linear-gradient(135deg, #8ce6ff, #3f9bff); }
+    .i-music { background-image: linear-gradient(135deg, #ff9eca, #b94d9b); }
+    .i-photos { background-image: linear-gradient(135deg, #ffd98d, #ff7a59); }
 
     .icon-label { font-size: 12px; color: var(--muted); }
 
@@ -101,6 +105,8 @@
       border-radius: var(--radius);
       border: 1px solid var(--border);
       background: linear-gradient(180deg, var(--window-top), var(--window));
+      backdrop-filter: blur(20px) saturate(130%);
+      -webkit-backdrop-filter: blur(20px) saturate(130%);
       box-shadow: var(--shadow);
       overflow: hidden;
       resize: both;
@@ -400,6 +406,40 @@
       line-height: 1.5;
     }
 
+
+    .store-view {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      margin-top: 10px;
+    }
+
+    .music-controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .photo-tile {
+      border-radius: 10px;
+      min-height: 78px;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(255,255,255,.2), rgba(255,255,255,.06));
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
     .taskbar {
       position: absolute;
       left: 12px;
@@ -413,6 +453,8 @@
       padding: 0 10px;
       border-radius: 14px;
       background: var(--panel);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
       border: 1px solid var(--border);
     }
 
@@ -461,6 +503,8 @@
       <button class="icon" data-open="cameraWin"><div class="icon-badge i-camera"></div><div class="icon-label">Camera</div></button>
       <button class="icon" data-open="gamesWin"><div class="icon-badge i-games"></div><div class="icon-label">Games</div></button>
       <button class="icon" data-open="weatherWin"><div class="icon-badge i-weather"></div><div class="icon-label">Weather</div></button>
+      <button class="icon" data-open="musicWin"><div class="icon-badge i-music"></div><div class="icon-label">Music</div></button>
+      <button class="icon" data-open="photosWin"><div class="icon-badge i-photos"></div><div class="icon-label">Photos</div></button>
       <button class="icon" data-open="aboutWin"><div class="icon-badge i-about"></div><div class="icon-label">About</div></button>
     </section>
 
@@ -559,7 +603,7 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       </div>
     </section>
 
-    <section class="window" id="settingsWin" style="left:250px; top:150px; width:390px; height:250px;">
+    <section class="window" id="settingsWin" style="left:250px; top:150px; width:430px; height:360px;">
       <header class="titlebar"><span class="title">Settings</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
@@ -572,26 +616,35 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
           <option value="green">Green Terminal</option>
         </select>
         <p class="small-note">This updates background instantly and saves in localStorage.</p>
+        <label for="wallpaperUrl">Custom wallpaper URL</label>
+        <div class="row">
+          <input id="wallpaperUrl" placeholder="https://...image.jpg" />
+          <button class="btn" id="applyWallpaperBtn">Apply</button>
+        </div>
+        <label for="wallpaperFile">Or upload wallpaper</label>
+        <input id="wallpaperFile" type="file" accept="image/*" />
+        <button class="btn" id="resetWallpaperBtn" style="margin-top:8px;">Reset wallpaper</button>
       </div>
     </section>
 
 
-    <section class="window" id="playWin" style="left:220px; top:100px; width:500px; height:340px;">
-      <header class="titlebar"><span class="title">Google Play Store</span>
+    <section class="window" id="playWin" style="left:220px; top:100px; width:760px; height:520px;">
+      <header class="titlebar"><span class="title">Google Play Store (real feed)</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
       <div class="window-resize-note">↘ resize</div>
-      <div class="content">
+      <div class="content browser-layout">
         <div class="row">
-          <input id="playSearch" placeholder="Search apps (e.g. YouTube, Spotify, Roblox)" />
+          <input id="playSearch" placeholder="Search Play Store apps" />
           <button class="btn" id="playSearchBtn">Search</button>
         </div>
-        <div class="app-grid" id="playGrid">
-          <div class="app-card"><strong>YouTube</strong><br/><span class="small-note">Video</span></div>
-          <div class="app-card"><strong>Spotify</strong><br/><span class="small-note">Music</span></div>
-          <div class="app-card"><strong>Roblox</strong><br/><span class="small-note">Games</span></div>
-          <div class="app-card"><strong>Canva</strong><br/><span class="small-note">Design</span></div>
+        <div class="quick-links">
+          <button class="chip" data-play="top charts">Top Charts</button>
+          <button class="chip" data-play="editors choice">Editors Choice</button>
+          <button class="chip" data-play="games">Games</button>
         </div>
+        <iframe id="playFrame" class="store-view" src="https://r.jina.ai/http://play.google.com/store/apps"></iframe>
+        <div class="small-note">Loads real Play Store pages through safe proxy mode for in-OS viewing.</div>
       </div>
     </section>
 
@@ -647,6 +700,39 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       </div>
     </section>
 
+
+    <section class="window" id="musicWin" style="left:420px; top:160px; width:420px; height:320px;">
+      <header class="titlebar"><span class="title">Music</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="window-resize-note">↘ resize</div>
+      <div class="content">
+        <div class="small-note">Stream sample music from your browser.</div>
+        <div class="music-controls">
+          <audio id="musicPlayer" controls src="https://upload.wikimedia.org/wikipedia/commons/4/45/En-us-hello.ogg"></audio>
+          <button class="btn" id="musicAltBtn">Load alternate track</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="window" id="photosWin" style="left:460px; top:170px; width:460px; height:340px;">
+      <header class="titlebar"><span class="title">Photos</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="window-resize-note">↘ resize</div>
+      <div class="content">
+        <div class="row">
+          <input id="photoTitle" placeholder="New album name" />
+          <button class="btn" id="addAlbumBtn">Add album</button>
+        </div>
+        <div class="photo-grid" id="photoGrid">
+          <div class="photo-tile">Vacation</div>
+          <div class="photo-tile">Family</div>
+          <div class="photo-tile">Wallpapers</div>
+        </div>
+      </div>
+    </section>
+
     <section class="window" id="aboutWin" style="left:260px; top:110px; width:430px; height:260px;">
       <header class="titlebar"><span class="title">About</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
@@ -675,6 +761,8 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         <button data-open="cameraWin">Camera</button>
         <button data-open="gamesWin">Games</button>
         <button data-open="weatherWin">Weather</button>
+        <button data-open="musicWin">Music</button>
+        <button data-open="photosWin">Photos</button>
       </div>
       <div class="clock" id="clock"></div>
     </footer>
@@ -1164,22 +1252,25 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
 
       const playSearch = document.getElementById('playSearch');
       const playSearchBtn = document.getElementById('playSearchBtn');
-      const playGrid = document.getElementById('playGrid');
+      const playFrame = document.getElementById('playFrame');
 
       function renderPlaySearch() {
         const q = (playSearch.value || '').trim();
         if (!q) return;
-        playGrid.innerHTML = `
-          <div class="app-card"><strong>${q}</strong><br/><span class="small-note">Top result</span></div>
-          <div class="app-card"><strong>${q} Lite</strong><br/><span class="small-note">Suggested</span></div>
-          <div class="app-card"><strong>${q} Pro</strong><br/><span class="small-note">Premium</span></div>
-          <div class="app-card"><strong>${q} Tools</strong><br/><span class="small-note">Utilities</span></div>
-        `;
+        playFrame.src = `https://r.jina.ai/http://play.google.com/store/search?q=${encodeURIComponent(q)}&c=apps`;
       }
 
       playSearchBtn.addEventListener('click', renderPlaySearch);
       playSearch.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') renderPlaySearch();
+      });
+
+      document.querySelectorAll('[data-play]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const q = chip.dataset.play || '';
+          playSearch.value = q;
+          renderPlaySearch();
+        });
       });
 
       const cameraVideo = document.getElementById('cameraVideo');
@@ -1209,16 +1300,73 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       startCamBtn.addEventListener('click', startCamera);
       stopCamBtn.addEventListener('click', stopCamera);
 
+
+      const wallpaperUrl = document.getElementById('wallpaperUrl');
+      const applyWallpaperBtn = document.getElementById('applyWallpaperBtn');
+      const wallpaperFile = document.getElementById('wallpaperFile');
+      const resetWallpaperBtn = document.getElementById('resetWallpaperBtn');
+
+      function setWallpaper(value) {
+        if (!value) {
+          localStorage.removeItem('web-os-custom-wallpaper');
+          applyTheme(themeSelect.value);
+          return;
+        }
+        document.body.style.setProperty('--wallpaper', `url("${value}") center / cover no-repeat fixed`);
+        localStorage.setItem('web-os-custom-wallpaper', value);
+      }
+
+      applyWallpaperBtn.addEventListener('click', () => setWallpaper((wallpaperUrl.value || '').trim()));
+      wallpaperUrl.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') setWallpaper((wallpaperUrl.value || '').trim());
+      });
+      wallpaperFile.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => setWallpaper(String(reader.result || ''));
+        reader.readAsDataURL(file);
+      });
+      resetWallpaperBtn.addEventListener('click', () => setWallpaper(''));
+
+      const savedCustomWallpaper = localStorage.getItem('web-os-custom-wallpaper') || '';
+      if (savedCustomWallpaper) {
+        wallpaperUrl.value = savedCustomWallpaper;
+        setWallpaper(savedCustomWallpaper);
+      }
+
+      const musicPlayer = document.getElementById('musicPlayer');
+      const musicAltBtn = document.getElementById('musicAltBtn');
+      musicAltBtn.addEventListener('click', () => {
+        musicPlayer.src = 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Violin_sound.ogg';
+        musicPlayer.play().catch(() => {});
+      });
+
+      const photoTitle = document.getElementById('photoTitle');
+      const addAlbumBtn = document.getElementById('addAlbumBtn');
+      const photoGrid = document.getElementById('photoGrid');
+      addAlbumBtn.addEventListener('click', () => {
+        const name = (photoTitle.value || '').trim();
+        if (!name) return;
+        const div = document.createElement('div');
+        div.className = 'photo-tile';
+        div.textContent = name;
+        photoGrid.prepend(div);
+        photoTitle.value = '';
+      });
+
       const themeSelect = document.getElementById('themeSelect');
       const applyTheme = (theme) => {
+        let gradient = 'radial-gradient(circle at 20% 18%, #2f6bd4, #0e2042 38%, #070f22)';
         if (theme === 'purple') {
-          document.body.style.background = 'radial-gradient(circle at 20% 18%, #8558d8, #39225f 40%, #1b1234)';
+          gradient = 'radial-gradient(circle at 20% 18%, #8558d8, #39225f 40%, #1b1234)';
         } else if (theme === 'green') {
-          document.body.style.background = 'radial-gradient(circle at 20% 18%, #2cab7f, #14533e 40%, #082218)';
-        } else {
-          document.body.style.background = 'radial-gradient(circle at 20% 18%, #2f6bd4, #0e2042 38%, #070f22)';
+          gradient = 'radial-gradient(circle at 20% 18%, #2cab7f, #14533e 40%, #082218)';
         }
         localStorage.setItem('web-os-theme', theme);
+        if (!localStorage.getItem('web-os-custom-wallpaper')) {
+          document.body.style.setProperty('--wallpaper', gradient);
+        }
       };
 
       const savedTheme = localStorage.getItem('web-os-theme') || 'blue';
