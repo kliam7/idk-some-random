@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Chromebook Web OS</title>
+  <style>
+    :root {
+      --bg-1: #0e2042;
+      --bg-2: #070f22;
+      --panel: rgba(13, 20, 38, 0.92);
+      --window: #121f3e;
+      --window-top: #1b315f;
+      --text: #eff4ff;
+      --muted: #b5c6ee;
+      --accent: #62b8ff;
+      --ok: #85f0a0;
+      --warn: #ffd77a;
+      --danger: #ff8f8f;
+      --border: rgba(255, 255, 255, 0.15);
+      --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 18%, #2f6bd4, var(--bg-1) 38%, var(--bg-2));
+      touch-action: manipulation;
+    }
+
+    .desktop {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 12px;
+      padding-bottom: 78px;
+    }
+
+    .icons {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 92px));
+      gap: 10px;
+      align-content: start;
+      max-width: 420px;
+    }
+
+    .icon {
+      border: 0;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      color: var(--text);
+      padding: 8px 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: background .18s ease;
+    }
+
+    .icon:hover, .icon:focus-visible { background: rgba(255, 255, 255, 0.14); }
+
+    .icon-badge {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 5px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.2);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .i-browser { background-image: radial-gradient(circle at 30% 30%, #9be2ff, #478dff 58%, #1a2f6c); }
+    .i-notes { background-image: linear-gradient(135deg, #ffe392, #ffb85c); }
+    .i-terminal { background-image: linear-gradient(135deg, #1ff7af, #0e8f64); }
+    .i-sudo { background-image: linear-gradient(135deg, #ff7f88, #b33652); }
+    .i-files { background-image: linear-gradient(135deg, #8bc8ff, #4e86db); }
+    .i-calc { background-image: linear-gradient(135deg, #d8d8e9, #9ea5c6); }
+    .i-settings { background-image: linear-gradient(135deg, #b9c8ef, #7284b9); }
+    .i-about { background-image: linear-gradient(135deg, #91f0e4, #4caeb8); }
+
+    .icon-label { font-size: 12px; color: var(--muted); }
+
+    .window {
+      position: absolute;
+      display: none;
+      min-width: 300px;
+      min-height: 210px;
+      width: min(820px, calc(100vw - 24px));
+      height: min(500px, calc(100vh - 110px));
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--window-top), var(--window));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .window.active { border-color: rgba(98, 184, 255, .85); }
+
+    .titlebar {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px 0 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .title { font-size: 13px; letter-spacing: .2px; }
+    .controls { display: flex; gap: 6px; }
+
+    .ctrl {
+      border: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-weight: 700;
+      cursor: pointer;
+      color: #061226;
+      padding: 0;
+    }
+
+    .min { background: var(--warn); }
+    .max { background: var(--ok); }
+    .close { background: var(--danger); }
+
+    .content { height: calc(100% - 40px); padding: 12px; }
+
+    input, textarea, button, select { font: inherit; color: inherit; }
+
+    input, textarea, select {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.07);
+      padding: 10px;
+      outline: none;
+    }
+
+    textarea { resize: none; height: 100%; }
+
+    .row { display: flex; gap: 8px; }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #051831;
+      font-weight: 700;
+      padding: 9px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .small-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.35;
+    }
+
+    .browser-layout {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+      height: 100%;
+    }
+
+    .quick-links { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .chip {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .preview {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      background: #09152b;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #fff;
+    }
+
+    .blocked {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 18px;
+      font-size: 13px;
+      color: var(--muted);
+      background: linear-gradient(180deg, #0b1733, #09122a);
+    }
+
+    .terminal {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 10px;
+      height: 100%;
+    }
+
+    .log {
+      border: 1px solid var(--border);
+      background: #070f1e;
+      border-radius: 10px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      overflow: auto;
+      line-height: 1.35;
+    }
+
+    .pkg-list {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.5;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .calc-wrap {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+      height: 100%;
+    }
+
+    .calc-screen {
+      font-size: 24px;
+      text-align: right;
+      font-weight: 700;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.28);
+      min-height: 50px;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .calc-grid button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      background: rgba(255,255,255,.12);
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .taskbar {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 10px;
+      border-radius: 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .task-buttons {
+      display: flex;
+      gap: 8px;
+      overflow: auto;
+    }
+
+    .task-buttons button {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 7px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .clock { font-size: 12px; color: var(--muted); }
+
+    @media (max-width: 940px) {
+      .desktop { padding: 8px; padding-bottom: 74px; }
+      .window {
+        width: calc(100vw - 16px) !important;
+        height: calc(100vh - 96px) !important;
+        left: 8px !important;
+        top: 8px !important;
+      }
+      .titlebar { cursor: default; }
+      .icons { grid-template-columns: repeat(auto-fill, minmax(84px, 84px)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="desktop">
+    <section class="icons" aria-label="Desktop icons">
+      <button class="icon" data-open="browserWin"><div class="icon-badge i-browser"></div><div class="icon-label">Browser</div></button>
+      <button class="icon" data-open="filesWin"><div class="icon-badge i-files"></div><div class="icon-label">Files</div></button>
+      <button class="icon" data-open="notesWin"><div class="icon-badge i-notes"></div><div class="icon-label">Notes</div></button>
+      <button class="icon" data-open="terminalWin"><div class="icon-badge i-terminal"></div><div class="icon-label">Terminal</div></button>
+      <button class="icon" data-open="sudoWin"><div class="icon-badge i-sudo"></div><div class="icon-label">Sudo Terminal</div></button>
+      <button class="icon" data-open="calcWin"><div class="icon-badge i-calc"></div><div class="icon-label">Calculator</div></button>
+      <button class="icon" data-open="settingsWin"><div class="icon-badge i-settings"></div><div class="icon-label">Settings</div></button>
+      <button class="icon" data-open="aboutWin"><div class="icon-badge i-about"></div><div class="icon-label">About</div></button>
+    </section>
+
+    <section class="window" id="browserWin" style="display:block; left:160px; top:70px;">
+      <header class="titlebar"><span class="title">Browser</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content browser-layout">
+        <form class="row" id="browserForm">
+          <input id="browserInput" placeholder="Search Google or type a URL" aria-label="Browser input" />
+          <button class="btn" type="submit">Go</button>
+        </form>
+        <div class="quick-links">
+          <button class="chip" data-query="chromebook help">Chromebook Help</button>
+          <button class="chip" data-query="latest linux news">Linux News</button>
+          <button class="chip" data-query="learn javascript">Learn JS</button>
+          <button class="chip" data-site="https://www.wikipedia.org">Wikipedia</button>
+        </div>
+        <div class="preview">
+          <iframe id="previewFrame" title="Web preview" src="about:blank"></iframe>
+          <div class="blocked" id="blocked"></div>
+        </div>
+        <div class="small-note">Searches open in a new tab (best on Chromebook). Site previews use iframe when allowed.</div>
+      </div>
+    </section>
+
+    <section class="window" id="filesWin" style="left:300px; top:110px; width:450px; height:320px;">
+      <header class="titlebar"><span class="title">Files</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content">
+        <p class="small-note">Demo file manager for this HTML OS:</p>
+        <ul class="pkg-list">
+          <li>📁 Downloads</li>
+          <li>📁 Documents</li>
+          <li>📁 Pictures</li>
+          <li>📄 todo.txt</li>
+          <li>📄 homework-notes.md</li>
+          <li>📄 installed-packages.log</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="window" id="notesWin" style="left:330px; top:140px; width:500px; height:350px;">
+      <header class="titlebar"><span class="title">Notes</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content"><textarea id="notes" placeholder="Write notes here..."></textarea></div>
+    </section>
+
+    <section class="window" id="terminalWin" style="left:470px; top:90px; width:520px; height:360px;">
+      <header class="titlebar"><span class="title">Terminal</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content terminal">
+        <div id="termLog" class="log">Web OS terminal
+Type: help</div>
+        <div class="row"><input id="termInput" placeholder="command" /><button id="runCmd" class="btn">Run</button></div>
+      </div>
+    </section>
+
+    <section class="window" id="sudoWin" style="left:210px; top:90px; width:620px; height:390px;">
+      <header class="titlebar"><span class="title">Sudo Terminal (apt emulator)</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content terminal">
+        <div id="sudoLog" class="log">sudo@webos:~$ help
+Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed | clear</div>
+        <div class="row"><input id="sudoInput" placeholder="sudo apt install nano" /><button id="runSudo" class="btn">Run</button></div>
+      </div>
+    </section>
+
+    <section class="window" id="calcWin" style="left:540px; top:120px; width:350px; height:430px;">
+      <header class="titlebar"><span class="title">Calculator</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content calc-wrap">
+        <div id="calcScreen" class="calc-screen">0</div>
+        <div class="calc-grid" id="calcGrid">
+          <button>C</button><button>(</button><button>)</button><button>/</button>
+          <button>7</button><button>8</button><button>9</button><button>*</button>
+          <button>4</button><button>5</button><button>6</button><button>-</button>
+          <button>1</button><button>2</button><button>3</button><button>+</button>
+          <button>0</button><button>.</button><button>=</button><button>⌫</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="window" id="settingsWin" style="left:250px; top:150px; width:390px; height:250px;">
+      <header class="titlebar"><span class="title">Settings</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content">
+        <label for="themeSelect">Wallpaper style</label>
+        <select id="themeSelect">
+          <option value="blue">Blue Aurora</option>
+          <option value="purple">Purple Dusk</option>
+          <option value="green">Green Terminal</option>
+        </select>
+        <p class="small-note">This updates background instantly and saves in localStorage.</p>
+      </div>
+    </section>
+
+    <section class="window" id="aboutWin" style="left:260px; top:110px; width:430px; height:260px;">
+      <header class="titlebar"><span class="title">About</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content">
+        <p>This is one big HTML file built for Chromebook Chrome.</p>
+        <ul class="pkg-list">
+          <li>Custom desktop icons</li>
+          <li>More built-in apps</li>
+          <li>Sudo apt terminal simulator for install flow demos</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="taskbar">
+      <div class="task-buttons">
+        <button data-open="browserWin">Browser</button>
+        <button data-open="filesWin">Files</button>
+        <button data-open="notesWin">Notes</button>
+        <button data-open="terminalWin">Terminal</button>
+        <button data-open="sudoWin">Sudo</button>
+        <button data-open="calcWin">Calc</button>
+        <button data-open="settingsWin">Settings</button>
+      </div>
+      <div class="clock" id="clock"></div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const windows = Array.from(document.querySelectorAll('.window'));
+      let z = 20;
+      const installedPkgs = new Set(['base-files', 'bash', 'coreutils', 'nano']);
+      let aptReady = false;
+
+      const isSmall = () => window.matchMedia('(max-width: 940px)').matches;
+
+      function focusWin(win) {
+        windows.forEach((w) => w.classList.remove('active'));
+        win.classList.add('active');
+        win.style.zIndex = String(++z);
+      }
+
+      function openWin(id) {
+        const win = document.getElementById(id);
+        if (!win) return;
+        win.style.display = 'block';
+        focusWin(win);
+      }
+
+      document.querySelectorAll('[data-open]').forEach((btn) => {
+        btn.addEventListener('click', () => openWin(btn.dataset.open));
+      });
+
+      function toggleMax(win) {
+        const maxed = win.dataset.maxed === '1';
+        if (!maxed) {
+          win.dataset.prev = JSON.stringify({
+            left: win.style.left,
+            top: win.style.top,
+            width: win.style.width,
+            height: win.style.height
+          });
+          win.style.left = '8px';
+          win.style.top = '8px';
+          win.style.width = 'calc(100vw - 16px)';
+          win.style.height = 'calc(100vh - 96px)';
+          win.dataset.maxed = '1';
+          return;
+        }
+        const prev = JSON.parse(win.dataset.prev || '{}');
+        win.style.left = prev.left || '140px';
+        win.style.top = prev.top || '80px';
+        win.style.width = prev.width || '';
+        win.style.height = prev.height || '';
+        win.dataset.maxed = '0';
+      }
+
+      function wireWindow(win) {
+        const titlebar = win.querySelector('.titlebar');
+        const close = win.querySelector('[data-close]');
+        const min = win.querySelector('[data-min]');
+        const max = win.querySelector('[data-max]');
+
+        close.addEventListener('click', () => { win.style.display = 'none'; });
+        min.addEventListener('click', () => { win.style.display = 'none'; });
+        max.addEventListener('click', () => toggleMax(win));
+        win.addEventListener('pointerdown', () => focusWin(win));
+
+        let drag = null;
+        titlebar.addEventListener('pointerdown', (event) => {
+          if (isSmall()) return;
+          if (event.target.closest('.controls')) return;
+          drag = {
+            x: event.clientX,
+            y: event.clientY,
+            left: win.offsetLeft,
+            top: win.offsetTop
+          };
+          titlebar.setPointerCapture(event.pointerId);
+          focusWin(win);
+        });
+
+        titlebar.addEventListener('pointermove', (event) => {
+          if (!drag || isSmall()) return;
+          const nextLeft = Math.max(0, drag.left + event.clientX - drag.x);
+          const nextTop = Math.max(0, drag.top + event.clientY - drag.y);
+          win.style.left = `${nextLeft}px`;
+          win.style.top = `${nextTop}px`;
+        });
+
+        const stopDrag = () => { drag = null; };
+        titlebar.addEventListener('pointerup', stopDrag);
+        titlebar.addEventListener('pointercancel', stopDrag);
+      }
+
+      windows.forEach(wireWindow);
+
+      const browserForm = document.getElementById('browserForm');
+      const browserInput = document.getElementById('browserInput');
+      const previewFrame = document.getElementById('previewFrame');
+      const blocked = document.getElementById('blocked');
+
+      function normalizeUrl(value) {
+        const input = value.trim();
+        if (!input) return '';
+        const looksLikeUrl = /^(https?:\/\/|www\.)/i.test(input) || /\.[a-z]{2,}$/i.test(input);
+        if (!looksLikeUrl) return `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+        return input.startsWith('http') ? input : `https://${input}`;
+      }
+
+      function browse(value) {
+        const target = normalizeUrl(value);
+        if (!target) return;
+
+        if (target.includes('google.com/search?q=')) {
+          window.open(target, '_blank', 'noopener,noreferrer');
+          blocked.style.display = 'flex';
+          blocked.textContent = 'Google results opened in a new tab.';
+          previewFrame.src = 'about:blank';
+          return;
+        }
+
+        blocked.style.display = 'none';
+        previewFrame.src = target;
+
+        const fallback = setTimeout(() => {
+          window.open(target, '_blank', 'noopener,noreferrer');
+          blocked.style.display = 'flex';
+          blocked.textContent = 'This site blocked iframe preview, opened in new tab.';
+        }, 1500);
+
+        previewFrame.onload = () => clearTimeout(fallback);
+      }
+
+      browserForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        browse(browserInput.value);
+      });
+
+      document.querySelectorAll('.chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const site = chip.dataset.site;
+          const query = chip.dataset.query;
+          const value = site || query || '';
+          browserInput.value = value;
+          browse(value);
+        });
+      });
+
+      const notes = document.getElementById('notes');
+      notes.value = localStorage.getItem('web-os-notes') || '';
+      notes.addEventListener('input', () => {
+        localStorage.setItem('web-os-notes', notes.value);
+      });
+
+      const termLog = document.getElementById('termLog');
+      const termInput = document.getElementById('termInput');
+      const runCmd = document.getElementById('runCmd');
+
+      function appendLog(el, text) {
+        el.textContent += `\n${text}`;
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function runTerminal(commandRaw) {
+        const command = commandRaw.trim();
+        if (!command) return;
+        const [base, ...rest] = command.split(' ');
+
+        if (base === 'help') return appendLog(termLog, '> help | time | echo <text> | google <query> | clear');
+        if (base === 'time') return appendLog(termLog, `> ${new Date().toString()}`);
+        if (base === 'echo') return appendLog(termLog, `> ${rest.join(' ')}`);
+        if (base === 'clear') {
+          termLog.textContent = 'Web OS terminal';
+          return;
+        }
+        if (base === 'google') {
+          const query = rest.join(' ').trim();
+          if (!query) return appendLog(termLog, '> Usage: google <query>');
+          window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer');
+          return appendLog(termLog, `> Searching Google for: ${query}`);
+        }
+
+        appendLog(termLog, `> Unknown command: ${command}`);
+      }
+
+      runCmd.addEventListener('click', () => {
+        runTerminal(termInput.value);
+        termInput.value = '';
+      });
+
+      termInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') runCmd.click();
+      });
+
+      const sudoLog = document.getElementById('sudoLog');
+      const sudoInput = document.getElementById('sudoInput');
+      const runSudo = document.getElementById('runSudo');
+
+      function savePkgs() {
+        localStorage.setItem('web-os-installed-pkgs', JSON.stringify(Array.from(installedPkgs).sort()));
+      }
+
+      function loadPkgs() {
+        const raw = localStorage.getItem('web-os-installed-pkgs');
+        if (!raw) return;
+        try {
+          JSON.parse(raw).forEach((pkg) => installedPkgs.add(pkg));
+        } catch (_) {
+          /* ignore invalid local data */
+        }
+      }
+
+      loadPkgs();
+
+      function sudoOut(text) {
+        appendLog(sudoLog, text);
+      }
+
+      function runSudoCommand(raw) {
+        const input = raw.trim();
+        if (!input) return;
+        sudoOut(`sudo@webos:~$ ${input}`);
+
+        if (input === 'clear') {
+          sudoLog.textContent = '';
+          return;
+        }
+
+        if (input === 'help') {
+          sudoOut('Try: sudo apt update');
+          sudoOut('Try: sudo apt install <pkg1> <pkg2>');
+          sudoOut('Try: apt list --installed');
+          return;
+        }
+
+        if (input === 'apt list --installed') {
+          sudoOut(installedPkgs.size ? Array.from(installedPkgs).sort().join('\n') : '(none)');
+          return;
+        }
+
+        if (input === 'sudo apt update') {
+          aptReady = true;
+          sudoOut('Hit:1 http://archive.ubuntu.com jammy InRelease');
+          sudoOut('Reading package lists... Done');
+          sudoOut('Package metadata updated.');
+          return;
+        }
+
+        if (input.startsWith('sudo apt install ')) {
+          if (!aptReady) {
+            sudoOut('E: Run `sudo apt update` first.');
+            return;
+          }
+
+          const pkgNames = input.replace('sudo apt install ', '').trim().split(/\s+/).filter(Boolean);
+          if (!pkgNames.length) {
+            sudoOut('E: No package name provided.');
+            return;
+          }
+
+          pkgNames.forEach((pkg) => installedPkgs.add(pkg));
+          savePkgs();
+          sudoOut(`Reading package lists... Done`);
+          sudoOut(`Building dependency tree... Done`);
+          sudoOut(`The following NEW packages will be installed: ${pkgNames.join(' ')}`);
+          sudoOut(`Done. Installed: ${pkgNames.length} package(s).`);
+          return;
+        }
+
+        if (input.startsWith('sudo install ')) {
+          const pkg = input.replace('sudo install ', '').trim();
+          if (!pkg) {
+            sudoOut('E: Usage: sudo install <pkg>');
+            return;
+          }
+          installedPkgs.add(pkg);
+          savePkgs();
+          sudoOut(`Installed ${pkg} (shortcut install command).`);
+          return;
+        }
+
+        if (input.startsWith('apt install ')) {
+          sudoOut('E: Permission denied. Use sudo apt install <pkg>.');
+          return;
+        }
+
+        sudoOut(`Command not found in sudo emulator: ${input}`);
+      }
+
+      runSudo.addEventListener('click', () => {
+        runSudoCommand(sudoInput.value);
+        sudoInput.value = '';
+      });
+
+      sudoInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') runSudo.click();
+      });
+
+      const calcScreen = document.getElementById('calcScreen');
+      const calcGrid = document.getElementById('calcGrid');
+      let expression = '0';
+
+      function paintCalc() {
+        calcScreen.textContent = expression;
+      }
+
+      calcGrid.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+        const value = button.textContent;
+
+        if (value === 'C') {
+          expression = '0';
+          paintCalc();
+          return;
+        }
+
+        if (value === '⌫') {
+          expression = expression.length > 1 ? expression.slice(0, -1) : '0';
+          paintCalc();
+          return;
+        }
+
+        if (value === '=') {
+          try {
+            expression = String(Function(`"use strict"; return (${expression})`)());
+          } catch (_) {
+            expression = 'Error';
+          }
+          paintCalc();
+          return;
+        }
+
+        expression = expression === '0' || expression === 'Error' ? value : expression + value;
+        paintCalc();
+      });
+
+      const themeSelect = document.getElementById('themeSelect');
+      const applyTheme = (theme) => {
+        if (theme === 'purple') {
+          document.body.style.background = 'radial-gradient(circle at 20% 18%, #8558d8, #39225f 40%, #1b1234)';
+        } else if (theme === 'green') {
+          document.body.style.background = 'radial-gradient(circle at 20% 18%, #2cab7f, #14533e 40%, #082218)';
+        } else {
+          document.body.style.background = 'radial-gradient(circle at 20% 18%, #2f6bd4, #0e2042 38%, #070f22)';
+        }
+        localStorage.setItem('web-os-theme', theme);
+      };
+
+      const savedTheme = localStorage.getItem('web-os-theme') || 'blue';
+      themeSelect.value = savedTheme;
+      applyTheme(savedTheme);
+      themeSelect.addEventListener('change', () => applyTheme(themeSelect.value));
+
+      const clock = document.getElementById('clock');
+      const paintClock = () => { clock.textContent = new Date().toLocaleString(); };
+      paintClock();
+      setInterval(paintClock, 1000);
+
+      focusWin(document.getElementById('browserWin'));
+    })();
+  </script>
+</body>
+</html>
