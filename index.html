@@ -172,9 +172,45 @@
 
     .browser-layout {
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      grid-template-rows: auto auto auto 1fr auto;
       gap: 10px;
       height: 100%;
+    }
+
+    .tab-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 10px;
+      min-width: 120px;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .tab-btn.active {
+      border-color: rgba(98,184,255,.9);
+      background: rgba(98,184,255,.2);
+    }
+
+    .tab-btn.new {
+      min-width: auto;
+      max-width: none;
+      width: 36px;
+      text-align: center;
+      font-weight: 700;
     }
 
     .quick-links { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -197,11 +233,16 @@
       background: #09152b;
     }
 
-    iframe {
+    .preview iframe {
       width: 100%;
       height: 100%;
       border: 0;
       background: #fff;
+      display: none;
+    }
+
+    .preview iframe.active {
+      display: block;
     }
 
     .blocked {
@@ -347,6 +388,10 @@
           <input id="browserInput" placeholder="Search Google or type a URL" aria-label="Browser input" />
           <button class="btn" type="submit">Go</button>
         </form>
+        <div class="tab-strip" id="tabStrip" aria-label="Browser tabs">
+          <button class="tab-btn active" data-tab="0">Home</button>
+          <button class="tab-btn new" id="newTabBtn" title="New Tab">+</button>
+        </div>
         <div class="quick-links">
           <button class="chip" data-query="chromebook help">Chromebook Help</button>
           <button class="chip" data-query="latest linux news">Linux News</button>
@@ -354,10 +399,10 @@
           <button class="chip" data-site="https://www.wikipedia.org">Wikipedia</button>
         </div>
         <div class="preview">
-          <iframe id="previewFrame" title="Web preview" src="about:blank"></iframe>
+          <iframe title="Web preview tab 1" src="about:blank" class="active" data-tab-frame="0"></iframe>
           <div class="blocked" id="blocked"></div>
         </div>
-        <div class="small-note">Searches open in a new tab (best on Chromebook). Site previews use iframe when allowed.</div>
+        <div class="small-note">Searches and links open inside tabs in this Web OS browser. Some sites may block iframe embedding.</div>
       </div>
     </section>
 
@@ -558,40 +603,85 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
 
       const browserForm = document.getElementById('browserForm');
       const browserInput = document.getElementById('browserInput');
-      const previewFrame = document.getElementById('previewFrame');
       const blocked = document.getElementById('blocked');
+      const tabStrip = document.getElementById('tabStrip');
+      const newTabBtn = document.getElementById('newTabBtn');
+      const preview = document.querySelector('.preview');
+      let activeTabId = 0;
+      let nextTabId = 1;
 
       function normalizeUrl(value) {
         const input = value.trim();
-        if (!input) return '';
+        if (!input) return 'about:blank';
         const looksLikeUrl = /^(https?:\/\/|www\.)/i.test(input) || /\.[a-z]{2,}$/i.test(input);
         if (!looksLikeUrl) return `https://www.google.com/search?q=${encodeURIComponent(input)}`;
         return input.startsWith('http') ? input : `https://${input}`;
       }
 
+      function getActiveFrame() {
+        return preview.querySelector(`iframe[data-tab-frame="${activeTabId}"]`);
+      }
+
+      function renameTab(id, label) {
+        const btn = tabStrip.querySelector(`.tab-btn[data-tab="${id}"]`);
+        if (btn) btn.textContent = label;
+      }
+
+      function setActiveTab(id) {
+        activeTabId = id;
+        tabStrip.querySelectorAll('.tab-btn[data-tab]').forEach((btn) => {
+          btn.classList.toggle('active', Number(btn.dataset.tab) === id);
+        });
+        preview.querySelectorAll('iframe[data-tab-frame]').forEach((frame) => {
+          frame.classList.toggle('active', Number(frame.dataset.tabFrame) === id);
+        });
+      }
+
+      function createTab(label = 'New Tab') {
+        const id = nextTabId++;
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.dataset.tab = String(id);
+        btn.textContent = label;
+        tabStrip.insertBefore(btn, newTabBtn);
+
+        const frame = document.createElement('iframe');
+        frame.dataset.tabFrame = String(id);
+        frame.title = `Web preview tab ${id + 1}`;
+        frame.src = 'about:blank';
+        preview.insertBefore(frame, blocked);
+
+        setActiveTab(id);
+      }
+
       function browse(value) {
         const target = normalizeUrl(value);
-        if (!target) return;
-
-        if (target.includes('google.com/search?q=')) {
-          window.open(target, '_blank', 'noopener,noreferrer');
-          blocked.style.display = 'flex';
-          blocked.textContent = 'Google results opened in a new tab.';
-          previewFrame.src = 'about:blank';
-          return;
-        }
+        const frame = getActiveFrame();
+        if (!frame) return;
 
         blocked.style.display = 'none';
-        previewFrame.src = target;
+        frame.src = target;
+        renameTab(activeTabId, value.trim() ? value.trim().slice(0, 24) : 'New Tab');
 
-        const fallback = setTimeout(() => {
-          window.open(target, '_blank', 'noopener,noreferrer');
-          blocked.style.display = 'flex';
-          blocked.textContent = 'This site blocked iframe preview, opened in new tab.';
-        }, 1500);
+        frame.onload = () => {
+          blocked.style.display = 'none';
+        };
 
-        previewFrame.onload = () => clearTimeout(fallback);
+        setTimeout(() => {
+          if (frame.src !== 'about:blank' && frame.src === target) {
+            blocked.style.display = 'flex';
+            blocked.textContent = 'This page may block embedding in iframes. Try another site or search.';
+          }
+        }, 1700);
       }
+
+      tabStrip.addEventListener('click', (event) => {
+        const btn = event.target.closest('.tab-btn[data-tab]');
+        if (!btn) return;
+        setActiveTab(Number(btn.dataset.tab));
+      });
+
+      newTabBtn.addEventListener('click', () => createTab());
 
       browserForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -638,8 +728,11 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         if (base === 'google') {
           const query = rest.join(' ').trim();
           if (!query) return appendLog(termLog, '> Usage: google <query>');
-          window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer');
-          return appendLog(termLog, `> Searching Google for: ${query}`);
+          const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+          browserInput.value = query;
+          browse(searchUrl);
+          openWin('browserWin');
+          return appendLog(termLog, `> Searching in OS browser for: ${query}`);
         }
 
         appendLog(termLog, `> Unknown command: ${command}`);
