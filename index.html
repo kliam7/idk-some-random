@@ -84,6 +84,8 @@
     .i-calc { background-image: linear-gradient(135deg, #d8d8e9, #9ea5c6); }
     .i-settings { background-image: linear-gradient(135deg, #b9c8ef, #7284b9); }
     .i-about { background-image: linear-gradient(135deg, #91f0e4, #4caeb8); }
+    .i-play { background-image: linear-gradient(135deg, #6fffc6, #2fbb78); }
+    .i-camera { background-image: linear-gradient(135deg, #ffccd6, #ff7ca0); }
 
     .icon-label { font-size: 12px; color: var(--muted); }
 
@@ -319,6 +321,38 @@
       font-weight: 700;
     }
 
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .app-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,.07);
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .camera-wrap {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 10px;
+      height: 100%;
+    }
+
+    #cameraVideo {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #050a15;
+      object-fit: cover;
+    }
+
     .taskbar {
       position: absolute;
       left: 12px;
@@ -376,6 +410,8 @@
       <button class="icon" data-open="sudoWin"><div class="icon-badge i-sudo"></div><div class="icon-label">Sudo Terminal</div></button>
       <button class="icon" data-open="calcWin"><div class="icon-badge i-calc"></div><div class="icon-label">Calculator</div></button>
       <button class="icon" data-open="settingsWin"><div class="icon-badge i-settings"></div><div class="icon-label">Settings</div></button>
+      <button class="icon" data-open="playWin"><div class="icon-badge i-play"></div><div class="icon-label">Play Store</div></button>
+      <button class="icon" data-open="cameraWin"><div class="icon-badge i-camera"></div><div class="icon-label">Camera</div></button>
       <button class="icon" data-open="aboutWin"><div class="icon-badge i-about"></div><div class="icon-label">About</div></button>
     </section>
 
@@ -402,7 +438,7 @@
           <iframe title="Web preview tab 1" src="about:blank" class="active" data-tab-frame="0"></iframe>
           <div class="blocked" id="blocked"></div>
         </div>
-        <div class="small-note">Searches and links open inside tabs in this Web OS browser. Some sites may block iframe embedding.</div>
+        <div class="small-note">Google searches run in a built-in safe results view (no Google iframe 403). Other sites load inside tabs when allowed.</div>
       </div>
     </section>
 
@@ -483,6 +519,38 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       </div>
     </section>
 
+
+    <section class="window" id="playWin" style="left:220px; top:100px; width:500px; height:340px;">
+      <header class="titlebar"><span class="title">Google Play Store</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content">
+        <div class="row">
+          <input id="playSearch" placeholder="Search apps (e.g. YouTube, Spotify, Roblox)" />
+          <button class="btn" id="playSearchBtn">Search</button>
+        </div>
+        <div class="app-grid" id="playGrid">
+          <div class="app-card"><strong>YouTube</strong><br/><span class="small-note">Video</span></div>
+          <div class="app-card"><strong>Spotify</strong><br/><span class="small-note">Music</span></div>
+          <div class="app-card"><strong>Roblox</strong><br/><span class="small-note">Games</span></div>
+          <div class="app-card"><strong>Canva</strong><br/><span class="small-note">Design</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="window" id="cameraWin" style="left:260px; top:130px; width:520px; height:360px;">
+      <header class="titlebar"><span class="title">Camera</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="content camera-wrap">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <div class="row">
+          <button class="btn" id="startCamBtn">Start Camera</button>
+          <button class="btn" id="stopCamBtn">Stop</button>
+        </div>
+      </div>
+    </section>
+
     <section class="window" id="aboutWin" style="left:260px; top:110px; width:430px; height:260px;">
       <header class="titlebar"><span class="title">About</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
@@ -506,6 +574,8 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         <button data-open="sudoWin">Sudo</button>
         <button data-open="calcWin">Calc</button>
         <button data-open="settingsWin">Settings</button>
+        <button data-open="playWin">Play Store</button>
+        <button data-open="cameraWin">Camera</button>
       </div>
       <div class="clock" id="clock"></div>
     </footer>
@@ -655,13 +725,24 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       }
 
       function browse(value) {
-        const target = normalizeUrl(value);
+        const raw = value.trim();
+        const target = normalizeUrl(raw);
         const frame = getActiveFrame();
         if (!frame) return;
 
+        const isGoogleSearch = target.includes('google.com/search?q=');
+        if (isGoogleSearch) {
+          const q = decodeURIComponent((target.split('q=')[1] || '').split('&')[0] || '').trim();
+          frame.srcdoc = `<!doctype html><html><head><style>body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#111}header{padding:14px 18px;background:#f1f3f4;border-bottom:1px solid #dadce0}main{padding:16px 18px}a{display:block;margin:10px 0;color:#1a0dab;text-decoration:none;font-size:16px}a small{display:block;color:#4d5156}</style></head><body><header><strong>Google results (safe view)</strong><div>Query: ${q || 'search'}</div></header><main><a href="https://www.google.com/search?q=${encodeURIComponent(q)}">Open full Google results<small>google.com/search</small></a><a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}">Wikipedia results<small>en.wikipedia.org</small></a><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}">YouTube results<small>youtube.com</small></a></main></body></html>`;
+          blocked.style.display = 'none';
+          renameTab(activeTabId, q ? `Google: ${q.slice(0, 16)}` : 'Google');
+          return;
+        }
+
+        frame.srcdoc = '';
         blocked.style.display = 'none';
         frame.src = target;
-        renameTab(activeTabId, value.trim() ? value.trim().slice(0, 24) : 'New Tab');
+        renameTab(activeTabId, raw ? raw.slice(0, 24) : 'New Tab');
 
         frame.onload = () => {
           blocked.style.display = 'none';
@@ -670,7 +751,7 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         setTimeout(() => {
           if (frame.src !== 'about:blank' && frame.src === target) {
             blocked.style.display = 'flex';
-            blocked.textContent = 'This website does not allow embedded view. Use search or open a different site inside this OS browser.';
+            blocked.textContent = 'This website does not allow embedded view. Try another site or use Google search above.';
           }
         }, 1700);
       }
@@ -889,6 +970,54 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         expression = expression === '0' || expression === 'Error' ? value : expression + value;
         paintCalc();
       });
+
+
+      const playSearch = document.getElementById('playSearch');
+      const playSearchBtn = document.getElementById('playSearchBtn');
+      const playGrid = document.getElementById('playGrid');
+
+      function renderPlaySearch() {
+        const q = (playSearch.value || '').trim();
+        if (!q) return;
+        playGrid.innerHTML = `
+          <div class="app-card"><strong>${q}</strong><br/><span class="small-note">Top result</span></div>
+          <div class="app-card"><strong>${q} Lite</strong><br/><span class="small-note">Suggested</span></div>
+          <div class="app-card"><strong>${q} Pro</strong><br/><span class="small-note">Premium</span></div>
+          <div class="app-card"><strong>${q} Tools</strong><br/><span class="small-note">Utilities</span></div>
+        `;
+      }
+
+      playSearchBtn.addEventListener('click', renderPlaySearch);
+      playSearch.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') renderPlaySearch();
+      });
+
+      const cameraVideo = document.getElementById('cameraVideo');
+      const startCamBtn = document.getElementById('startCamBtn');
+      const stopCamBtn = document.getElementById('stopCamBtn');
+      let camStream = null;
+
+      async function startCamera() {
+        try {
+          camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          cameraVideo.srcObject = camStream;
+        } catch (err) {
+          cameraVideo.replaceWith(Object.assign(document.createElement('div'), {
+            className: 'small-note',
+            textContent: 'Camera access failed. Check browser permissions.'
+          }));
+        }
+      }
+
+      function stopCamera() {
+        if (!camStream) return;
+        camStream.getTracks().forEach((t) => t.stop());
+        camStream = null;
+        cameraVideo.srcObject = null;
+      }
+
+      startCamBtn.addEventListener('click', startCamera);
+      stopCamBtn.addEventListener('click', stopCamera);
 
       const themeSelect = document.getElementById('themeSelect');
       const applyTheme = (theme) => {
