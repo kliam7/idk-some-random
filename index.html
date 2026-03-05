@@ -86,6 +86,8 @@
     .i-about { background-image: linear-gradient(135deg, #91f0e4, #4caeb8); }
     .i-play { background-image: linear-gradient(135deg, #6fffc6, #2fbb78); }
     .i-camera { background-image: linear-gradient(135deg, #ffccd6, #ff7ca0); }
+    .i-games { background-image: linear-gradient(135deg, #a98bff, #6b47db); }
+    .i-weather { background-image: linear-gradient(135deg, #8ce6ff, #3f9bff); }
 
     .icon-label { font-size: 12px; color: var(--muted); }
 
@@ -101,6 +103,7 @@
       background: linear-gradient(180deg, var(--window-top), var(--window));
       box-shadow: var(--shadow);
       overflow: hidden;
+      resize: both;
       touch-action: none;
     }
 
@@ -353,6 +356,50 @@
       object-fit: cover;
     }
 
+
+    .window-resize-note {
+      position: absolute;
+      right: 10px;
+      bottom: 6px;
+      font-size: 10px;
+      color: rgba(255,255,255,.45);
+      pointer-events: none;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 72px);
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .game-cell {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      font-size: 22px;
+      font-weight: 700;
+      height: 72px;
+      cursor: pointer;
+    }
+
+    .game-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .weather-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,.08);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
     .taskbar {
       position: absolute;
       left: 12px;
@@ -412,6 +459,8 @@
       <button class="icon" data-open="settingsWin"><div class="icon-badge i-settings"></div><div class="icon-label">Settings</div></button>
       <button class="icon" data-open="playWin"><div class="icon-badge i-play"></div><div class="icon-label">Play Store</div></button>
       <button class="icon" data-open="cameraWin"><div class="icon-badge i-camera"></div><div class="icon-label">Camera</div></button>
+      <button class="icon" data-open="gamesWin"><div class="icon-badge i-games"></div><div class="icon-label">Games</div></button>
+      <button class="icon" data-open="weatherWin"><div class="icon-badge i-weather"></div><div class="icon-label">Weather</div></button>
       <button class="icon" data-open="aboutWin"><div class="icon-badge i-about"></div><div class="icon-label">About</div></button>
     </section>
 
@@ -419,6 +468,7 @@
       <header class="titlebar"><span class="title">Browser</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content browser-layout">
         <form class="row" id="browserForm">
           <input id="browserInput" placeholder="Search Google or type a URL" aria-label="Browser input" />
@@ -438,7 +488,7 @@
           <iframe title="Web preview tab 1" src="about:blank" class="active" data-tab-frame="0"></iframe>
           <div class="blocked" id="blocked"></div>
         </div>
-        <div class="small-note">Google searches run in a built-in safe results view (no Google iframe 403). Other sites load inside tabs when allowed.</div>
+        <div class="small-note">Google searches now use a built-in Google proxy view to avoid iframe 403. Other sites load in tabs when allowed.</div>
       </div>
     </section>
 
@@ -446,6 +496,7 @@
       <header class="titlebar"><span class="title">Files</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content">
         <p class="small-note">Demo file manager for this HTML OS:</p>
         <ul class="pkg-list">
@@ -463,6 +514,7 @@
       <header class="titlebar"><span class="title">Notes</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content"><textarea id="notes" placeholder="Write notes here..."></textarea></div>
     </section>
 
@@ -470,6 +522,7 @@
       <header class="titlebar"><span class="title">Terminal</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content terminal">
         <div id="termLog" class="log">Web OS terminal
 Type: help</div>
@@ -481,6 +534,7 @@ Type: help</div>
       <header class="titlebar"><span class="title">Sudo Terminal (apt emulator)</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content terminal">
         <div id="sudoLog" class="log">sudo@webos:~$ help
 Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed | clear</div>
@@ -492,6 +546,7 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       <header class="titlebar"><span class="title">Calculator</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content calc-wrap">
         <div id="calcScreen" class="calc-screen">0</div>
         <div class="calc-grid" id="calcGrid">
@@ -508,6 +563,7 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       <header class="titlebar"><span class="title">Settings</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content">
         <label for="themeSelect">Wallpaper style</label>
         <select id="themeSelect">
@@ -524,6 +580,7 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       <header class="titlebar"><span class="title">Google Play Store</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content">
         <div class="row">
           <input id="playSearch" placeholder="Search apps (e.g. YouTube, Spotify, Roblox)" />
@@ -542,6 +599,7 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       <header class="titlebar"><span class="title">Camera</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content camera-wrap">
         <video id="cameraVideo" autoplay playsinline muted></video>
         <div class="row">
@@ -551,10 +609,49 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
       </div>
     </section>
 
+
+    <section class="window" id="gamesWin" style="left:320px; top:120px; width:420px; height:420px;">
+      <header class="titlebar"><span class="title">Games Hub</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="window-resize-note">↘ resize</div>
+      <div class="content">
+        <strong>Tic-Tac-Toe</strong>
+        <div class="game-grid" id="tttGrid">
+          <button class="game-cell" data-i="0"></button><button class="game-cell" data-i="1"></button><button class="game-cell" data-i="2"></button>
+          <button class="game-cell" data-i="3"></button><button class="game-cell" data-i="4"></button><button class="game-cell" data-i="5"></button>
+          <button class="game-cell" data-i="6"></button><button class="game-cell" data-i="7"></button><button class="game-cell" data-i="8"></button>
+        </div>
+        <div class="game-row">
+          <span class="small-note" id="tttStatus">Your turn: X</span>
+          <button class="btn" id="tttReset">Reset</button>
+          <button class="btn" id="reactionBtn">Reaction Game</button>
+          <span class="small-note" id="reactionStatus">Tap "Reaction Game" then tap again fast.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="window" id="weatherWin" style="left:380px; top:140px; width:390px; height:320px;">
+      <header class="titlebar"><span class="title">Weather</span>
+        <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
+      </header>
+      <div class="window-resize-note">↘ resize</div>
+      <div class="content">
+        <div class="row">
+          <input id="weatherCity" placeholder="City name" />
+          <button class="btn" id="weatherBtn">Get</button>
+        </div>
+        <div class="weather-card" id="weatherCard">
+          City: Mountain View<br/>Temp: 24°C<br/>Condition: Sunny ☀️<br/>Wind: 7 km/h
+        </div>
+      </div>
+    </section>
+
     <section class="window" id="aboutWin" style="left:260px; top:110px; width:430px; height:260px;">
       <header class="titlebar"><span class="title">About</span>
         <div class="controls"><button class="ctrl min" data-min>−</button><button class="ctrl max" data-max>□</button><button class="ctrl close" data-close>×</button></div>
       </header>
+      <div class="window-resize-note">↘ resize</div>
       <div class="content">
         <p>This is one big HTML file built for Chromebook Chrome.</p>
         <ul class="pkg-list">
@@ -576,6 +673,8 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         <button data-open="settingsWin">Settings</button>
         <button data-open="playWin">Play Store</button>
         <button data-open="cameraWin">Camera</button>
+        <button data-open="gamesWin">Games</button>
+        <button data-open="weatherWin">Weather</button>
       </div>
       <div class="clock" id="clock"></div>
     </footer>
@@ -733,9 +832,18 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         const isGoogleSearch = target.includes('google.com/search?q=');
         if (isGoogleSearch) {
           const q = decodeURIComponent((target.split('q=')[1] || '').split('&')[0] || '').trim();
-          frame.srcdoc = `<!doctype html><html><head><style>body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#111}header{padding:14px 18px;background:#f1f3f4;border-bottom:1px solid #dadce0}main{padding:16px 18px}a{display:block;margin:10px 0;color:#1a0dab;text-decoration:none;font-size:16px}a small{display:block;color:#4d5156}</style></head><body><header><strong>Google results (safe view)</strong><div>Query: ${q || 'search'}</div></header><main><a href="https://www.google.com/search?q=${encodeURIComponent(q)}">Open full Google results<small>google.com/search</small></a><a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}">Wikipedia results<small>en.wikipedia.org</small></a><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}">YouTube results<small>youtube.com</small></a></main></body></html>`;
+          const proxyUrl = `https://r.jina.ai/http://www.google.com/search?q=${encodeURIComponent(q)}`;
+          frame.srcdoc = '';
+          frame.src = proxyUrl;
           blocked.style.display = 'none';
           renameTab(activeTabId, q ? `Google: ${q.slice(0, 16)}` : 'Google');
+
+          setTimeout(() => {
+            if (frame.src.includes('r.jina.ai')) {
+              blocked.style.display = 'flex';
+              blocked.textContent = 'Loaded Google via in-OS safe proxy mode to prevent 403 iframe errors.';
+            }
+          }, 900);
           return;
         }
 
@@ -971,6 +1079,88 @@ Commands: sudo apt update | sudo apt install &lt;pkg&gt; | apt list --installed 
         paintCalc();
       });
 
+
+
+      const tttGrid = document.getElementById('tttGrid');
+      const tttStatus = document.getElementById('tttStatus');
+      const tttReset = document.getElementById('tttReset');
+      const reactionBtn = document.getElementById('reactionBtn');
+      const reactionStatus = document.getElementById('reactionStatus');
+      let tttBoard = Array(9).fill('');
+      let tttTurn = 'X';
+      let reactionStart = 0;
+
+      function checkWinner(board) {
+        const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for (const [a,b,c] of lines) {
+          if (board[a] && board[a] === board[b] && board[b] === board[c]) return board[a];
+        }
+        return '';
+      }
+
+      function renderTtt() {
+        tttGrid.querySelectorAll('.game-cell').forEach((btn) => {
+          btn.textContent = tttBoard[Number(btn.dataset.i)] || '';
+        });
+      }
+
+      tttGrid.addEventListener('click', (event) => {
+        const btn = event.target.closest('.game-cell');
+        if (!btn) return;
+        const i = Number(btn.dataset.i);
+        if (tttBoard[i]) return;
+        tttBoard[i] = tttTurn;
+        const win = checkWinner(tttBoard);
+        if (win) {
+          renderTtt();
+          tttStatus.textContent = `Winner: ${win}`;
+          return;
+        }
+        if (tttBoard.every(Boolean)) {
+          renderTtt();
+          tttStatus.textContent = 'Draw!';
+          return;
+        }
+        tttTurn = tttTurn === 'X' ? 'O' : 'X';
+        tttStatus.textContent = `Your turn: ${tttTurn}`;
+        renderTtt();
+      });
+
+      tttReset.addEventListener('click', () => {
+        tttBoard = Array(9).fill('');
+        tttTurn = 'X';
+        tttStatus.textContent = 'Your turn: X';
+        renderTtt();
+      });
+
+      reactionBtn.addEventListener('click', () => {
+        if (!reactionStart) {
+          reactionStart = performance.now();
+          reactionStatus.textContent = 'Tap again now!';
+          return;
+        }
+        const ms = Math.round(performance.now() - reactionStart);
+        reactionStart = 0;
+        reactionStatus.textContent = `Reaction time: ${ms}ms`;
+      });
+
+      const weatherCity = document.getElementById('weatherCity');
+      const weatherBtn = document.getElementById('weatherBtn');
+      const weatherCard = document.getElementById('weatherCard');
+
+      function pseudoWeather(city) {
+        const name = city || 'Mountain View';
+        const seed = Array.from(name).reduce((a, c) => a + c.charCodeAt(0), 0);
+        const temp = 14 + (seed % 19);
+        const cond = ['Sunny ☀️', 'Cloudy ☁️', 'Rain 🌧️', 'Windy 🌬️'][seed % 4];
+        const wind = 4 + (seed % 18);
+        weatherCard.innerHTML = `City: ${name}<br/>Temp: ${temp}°C<br/>Condition: ${cond}<br/>Wind: ${wind} km/h`;
+      }
+
+      weatherBtn.addEventListener('click', () => pseudoWeather((weatherCity.value || '').trim()));
+      weatherCity.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') pseudoWeather((weatherCity.value || '').trim());
+      });
 
       const playSearch = document.getElementById('playSearch');
       const playSearchBtn = document.getElementById('playSearchBtn');
